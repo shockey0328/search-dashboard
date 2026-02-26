@@ -544,7 +544,11 @@ function updateRetentionCharts() {
             borderWidth: 1,
             textStyle: { color: '#333' },
             formatter: function(params) {
-                return `${displayData[params.value[1]].cohort_week}<br/>第${params.value[0]}周留存: ${params.value[2]}%`;
+                const value = params.value[2];
+                if (params.value[0] === 0) {
+                    return `${displayData[params.value[1]].cohort_week}<br/>当周留存: ${value}%`;
+                }
+                return `${displayData[params.value[1]].cohort_week}<br/>第${params.value[0]}周留存: ${value}%`;
             }
         },
         grid: {
@@ -589,7 +593,7 @@ function updateRetentionCharts() {
         },
         visualMap: {
             min: 0,
-            max: 100,
+            max: 30,
             calculable: true,
             orient: 'horizontal',
             left: 'center',
@@ -597,12 +601,15 @@ function updateRetentionCharts() {
             itemWidth: 20,
             itemHeight: 140,
             inRange: {
-                color: ['#FFF5F2', '#FFE8DF', '#FFA366', '#FF6B35', '#E85A2A']
+                color: ['#FFF5F2', '#FFE8DF', '#FFCDB3', '#FFA366', '#FF8C5A', '#FF6B35', '#E85A2A']
             },
             text: ['高', '低'],
             textStyle: { 
                 color: '#666',
                 fontSize: 11
+            },
+            formatter: function(value) {
+                return value.toFixed(0) + '%';
             }
         },
         series: [{
@@ -611,11 +618,16 @@ function updateRetentionCharts() {
             label: {
                 show: true,
                 formatter: function(params) {
-                    return params.value[2] ? params.value[2].toFixed(1) : '';
+                    const value = params.value[2];
+                    if (params.value[0] === 0) {
+                        return '100';
+                    }
+                    return value ? value.toFixed(1) : '';
                 },
                 fontSize: 9,
                 color: function(params) {
-                    return params.value[2] > 50 ? '#fff' : '#666';
+                    if (params.value[0] === 0) return '#fff';
+                    return params.value[2] > 15 ? '#fff' : '#666';
                 }
             },
             emphasis: {
