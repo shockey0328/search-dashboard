@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索数据看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: #fff;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            height: 40px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #FF6B35;
+        }
+
+        .week-selector {
+            padding: 8px 16px;
+            border: 2px solid #FF6B35;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #FF6B35;
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .week-selector:hover {
+            background: #FFF5F2;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #FF6B35;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #FF6B35;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #FF6B35 0%, #FFA366 100%);
+            border-radius: 2px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 450px;
+            position: relative;
+        }
+
+        .chart-container.large {
+            height: 550px;
+        }
+
+        .chart-container.medium {
+            height: 480px;
+        }
+
+        .chart-container.heatmap {
+            height: 500px;
+        }
+
+        .chart-wrapper {
+            background: #FAFAFA;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-header h3 {
+            font-size: 16px;
+            color: #666;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .chart-stats {
+            display: flex;
+            gap: 16px;
+            padding: 14px;
+            background: linear-gradient(135deg, #FFF5F2 0%, #FFE8DF 100%);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.1);
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #FF6B35;
+            margin-bottom: 4px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #FF6B35 0%, #FFA366 100%);
+            border-radius: 12px;
+            padding: 18px;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .metric-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card .label {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            opacity: 1;
+        }
+
+        .metric-card .change {
+            font-size: 11px;
+            margin-top: 5px;
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 8px 20px;
+            border: 2px solid #FF6B35;
+            border-radius: 8px;
+            background: #fff;
+            color: #FF6B35;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #FF6B35;
+            color: #fff;
+        }
+
+        .tab-btn:hover {
+            background: #FFA366;
+            color: #fff;
+            border-color: #FFA366;
+        }
+
+        .ai-analysis {
+            background: linear-gradient(135deg, #FFF5F2 0%, #FFE8DF 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #FF6B35;
+        }
+
+        .ai-analysis h4 {
+            color: #FF6B35;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .ai-analysis p {
+            line-height: 1.8;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: 12px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .chart-container.large,
+            .chart-container.medium {
+                height: 350px;
+            }
+
+            .card-title {
+                font-size: 16px;
+            }
+
+            .stat-value {
+                font-size: 22px;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .metric-card .value {
+                font-size: 24px;
+            }
+
+            .metric-card .label {
+                font-size: 13px;
+            }
+
+            .metric-card .change {
+                font-size: 11px;
+            }
+
+            .chart-stats {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .stat-item {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="logo.png" alt="Logo" class="logo">
+            <div class="header-title">搜索数据看板</div>
+        </div>
+        <select class="week-selector" id="weekSelector">
+            <option value="1">2026年第1周</option>
+            <option value="2">2026年第2周</option>
+            <option value="3">2026年第3周</option>
+            <option value="4">2026年第4周</option>
+            <option value="5">2026年第5周</option>
+            <option value="6">2026年第6周</option>
+            <option value="7">2026年第7周</option>
+            <option value="8">2026年第8周</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <!-- 数据概览 -->
+        <div class="grid-3" id="overviewCards">
+            <div class="metric-card">
+                <div class="value" id="totalSearches">-</div>
+                <div class="label">本周搜索次数</div>
+                <div class="change" id="searchChange">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="value" id="totalUsers">-</div>
+                <div class="label">本周搜索用户</div>
+                <div class="change" id="userChange">-</div>
+            </div>
+            <div class="metric-card">
+                <div class="value" id="conversionRate">-</div>
+                <div class="label">平均转化率</div>
+                <div class="change" id="conversionChange">-</div>
+            </div>
+        </div>
+
+        <!-- 模块一：热搜词分析 -->
+        <div class="card">
+            <div class="card-title">热搜词分析</div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-sort="uv">按UV排序</button>
+                <button class="tab-btn" data-sort="pv">按PV排序</button>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <h3>TOP 100 热搜词排行</h3>
+                    </div>
+                    <div class="chart-container large" id="topKeywordsChart"></div>
+                </div>
+                <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <h3>词云图</h3>
+                    </div>
+                    <div class="chart-container large" id="wordCloudChart"></div>
+                </div>
+            </div>
+
+            <div class="ai-analysis" id="aiAnalysis">
+                <h4>AI 智能分析</h4>
+                <div class="loading">正在分析数据...</div>
+            </div>
+        </div>
+
+        <!-- 模块二：搜索行为漏斗 -->
+        <div class="card">
+            <div class="card-title">搜索行为漏斗</div>
+            
+            <div class="chart-stats" id="funnelStats">
+                <div class="stat-item">
+                    <div class="stat-value" id="funnelSearch">-</div>
+                    <div class="stat-label">进行搜索</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="funnelClick">-</div>
+                    <div class="stat-label">点击资源</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="funnelUsage">-</div>
+                    <div class="stat-label">使用资源</div>
+                </div>
+            </div>
+
+            <div class="chart-container medium" id="funnelChart"></div>
+        </div>
+
+        <!-- 模块三：搜索转化趋势 -->
+        <div class="card">
+            <div class="card-title">搜索转化趋势</div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-range="21">近3周</button>
+                <button class="tab-btn" data-range="28">近4周</button>
+                <button class="tab-btn" data-range="35">近5周</button>
+            </div>
+
+            <div class="chart-container" id="conversionChart"></div>
+        </div>
+
+        <!-- 模块四：搜索功能留存 -->
+        <div class="card">
+            <div class="card-title">搜索功能留存</div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-weeks="5">近5周</button>
+                <button class="tab-btn" data-weeks="10">近10周</button>
+                <button class="tab-btn" data-weeks="15">近15周</button>
+                <button class="tab-btn" data-weeks="all">全部</button>
+            </div>
+
+            <div class="grid-2">
+                <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <h3>留存热力图</h3>
+                    </div>
+                    <div class="chart-container heatmap" id="retentionHeatmap"></div>
+                </div>
+                <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <h3>留存趋势</h3>
+                    </div>
+                    <div class="chart-container heatmap" id="retentionTrend"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
