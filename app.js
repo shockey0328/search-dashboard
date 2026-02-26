@@ -517,6 +517,8 @@ function updateRetentionCharts() {
         displayData = data.slice(0, Math.min(currentRetentionWeeks, data.length));
     }
 
+    console.log('留存数据:', displayData); // 调试日志
+
     // 热力图
     const heatmapChart = echarts.init(document.getElementById('retentionHeatmap'));
     
@@ -530,11 +532,16 @@ function updateRetentionCharts() {
         for (let col = 0; col <= 12; col++) {
             const key = `week_${col}`;
             const value = row[key];
-            if (value && value !== 'null') {
-                heatmapData.push([col, rowIndex, parseFloat(value)]);
+            if (value && value !== 'null' && value !== null) {
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue)) {
+                    heatmapData.push([col, rowIndex, numValue]);
+                }
             }
         }
     });
+
+    console.log('热力图数据:', heatmapData); // 调试日志
 
     heatmapChart.setOption({
         tooltip: {
@@ -624,10 +631,16 @@ function updateRetentionCharts() {
                     }
                     return value ? value.toFixed(1) : '';
                 },
-                fontSize: 9,
+                fontSize: 11,
+                fontWeight: 'bold',
                 color: function(params) {
+                    // W0列（当周留存）使用白色
                     if (params.value[0] === 0) return '#fff';
-                    return params.value[2] > 15 ? '#fff' : '#666';
+                    // 其他列根据数值使用深色，确保在浅色背景上可见
+                    const value = params.value[2];
+                    if (value > 20) return '#fff';  // 深色背景用白色
+                    if (value > 10) return '#333';  // 中等背景用深灰
+                    return '#333';  // 浅色背景用深灰，确保可见
                 }
             },
             emphasis: {
@@ -636,11 +649,15 @@ function updateRetentionCharts() {
                     shadowColor: 'rgba(255, 107, 53, 0.5)',
                     borderColor: '#FF6B35',
                     borderWidth: 2
+                },
+                label: {
+                    fontSize: 13,
+                    fontWeight: 'bold'
                 }
             },
             itemStyle: {
                 borderColor: '#fff',
-                borderWidth: 1
+                borderWidth: 2
             }
         }]
     });
@@ -655,8 +672,8 @@ function updateRetentionCharts() {
     weekKeys.forEach((key, index) => {
         const weekData = displayData.map(row => {
             const value = row[key];
-            return value && value !== 'null' ? parseFloat(value) : null;
-        }).filter(v => v !== null);
+            return value && value !== 'null' && value !== null ? parseFloat(value) : null;
+        }).filter(v => v !== null && !isNaN(v));
 
         if (weekData.length > 0) {
             series.push({
