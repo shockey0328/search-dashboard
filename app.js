@@ -23,7 +23,7 @@ async function loadAllData() {
     try {
         // 加载每周搜索词数据
         for (let i = 1; i <= 8; i++) {
-            const response = await fetch(`第${i}周搜索词.csv`);
+            const response = await fetch(`week${i}-keywords.csv`);
             const buffer = await response.arrayBuffer();
             const decoder = new TextDecoder('utf-8');
             const text = decoder.decode(buffer);
@@ -31,21 +31,21 @@ async function loadAllData() {
         }
 
         // 加载漏斗数据
-        const funnelResponse = await fetch('搜索行为漏斗.csv');
+        const funnelResponse = await fetch('funnel.csv');
         const funnelBuffer = await funnelResponse.arrayBuffer();
         const funnelDecoder = new TextDecoder('utf-8');
         const funnelText = funnelDecoder.decode(funnelBuffer);
         allData.funnel = parseCSV(funnelText);
 
         // 加载转化率数据
-        const conversionResponse = await fetch('搜索转化率.csv');
+        const conversionResponse = await fetch('conversion.csv');
         const conversionBuffer = await conversionResponse.arrayBuffer();
         const conversionDecoder = new TextDecoder('utf-8');
         const conversionText = conversionDecoder.decode(conversionBuffer);
         allData.conversion = parseCSV(conversionText);
 
         // 加载留存数据
-        const retentionResponse = await fetch('搜索功能留存看板.csv');
+        const retentionResponse = await fetch('retention.csv');
         const retentionBuffer = await retentionResponse.arrayBuffer();
         const retentionDecoder = new TextDecoder('utf-8');
         const retentionText = retentionDecoder.decode(retentionBuffer);
