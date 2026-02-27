@@ -4,8 +4,115 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>搜索数据看板</title>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+    <!-- ECharts 多 CDN 备选方案 -->
+    <script>
+        // CDN 备选列表
+        const cdnList = [
+            {
+                echarts: 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
+                wordcloud: 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
+            },
+            {
+                echarts: 'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js',
+                wordcloud: 'https://unpkg.com/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
+            },
+            {
+                echarts: 'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js',
+                wordcloud: 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
+            },
+            {
+                echarts: 'https://lib.baomitu.com/echarts/5.4.3/echarts.min.js',
+                wordcloud: 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
+            }
+        ];
+
+        let currentCdnIndex = 0;
+        let echartsLoaded = false;
+        let wordcloudLoaded = false;
+
+        function loadScript(src, timeout = 10000) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                
+                const timer = setTimeout(() => {
+                    script.remove();
+                    reject(new Error(`加载超时: ${src}`));
+                }, timeout);
+
+                script.onload = () => {
+                    clearTimeout(timer);
+                    resolve();
+                };
+
+                script.onerror = () => {
+                    clearTimeout(timer);
+                    script.remove();
+                    reject(new Error(`加载失败: ${src}`));
+                };
+
+                document.head.appendChild(script);
+            });
+        }
+
+        async function loadECharts() {
+            while (currentCdnIndex < cdnList.length) {
+                const cdn = cdnList[currentCdnIndex];
+                console.log(`尝试加载 CDN ${currentCdnIndex + 1}/${cdnList.length}:`, cdn.echarts);
+
+                try {
+                    // 加载 ECharts
+                    await loadScript(cdn.echarts);
+                    console.log('✓ ECharts 加载成功');
+                    echartsLoaded = true;
+
+                    // 加载词云插件
+                    await loadScript(cdn.wordcloud);
+                    console.log('✓ 词云插件加载成功');
+                    wordcloudLoaded = true;
+
+                    return true;
+                } catch (error) {
+                    console.warn(`✗ CDN ${currentCdnIndex + 1} 加载失败:`, error.message);
+                    currentCdnIndex++;
+                }
+            }
+
+            // 所有 CDN 都失败
+            console.error('所有 CDN 加载失败');
+            document.body.innerHTML = `
+                <div style="text-align: center; padding: 100px 20px; font-family: sans-serif;">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">⚠️ 资源加载失败</h2>
+                    <p style="color: #666; margin-bottom: 10px;">无法加载图表库，请检查网络连接或尝试以下方法：</p>
+                    <ul style="text-align: left; max-width: 500px; margin: 20px auto; color: #666; line-height: 1.8;">
+                        <li>检查网络连接是否正常</li>
+                        <li>关闭浏览器的跟踪保护功能</li>
+                        <li>尝试使用其他浏览器（Chrome、Edge）</li>
+                        <li>检查防火墙或代理设置</li>
+                        <li>刷新页面重试</li>
+                    </ul>
+                    <button onclick="location.reload()" style="
+                        padding: 12px 30px;
+                        background: #FF6B35;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        cursor: pointer;
+                        margin-top: 20px;
+                    ">刷新页面</button>
+                </div>
+            `;
+            return false;
+        }
+
+        // 页面加载时执行
+        loadECharts().then(success => {
+            if (success) {
+                console.log('✓ 所有资源加载完成，可以初始化应用');
+            }
+        });
+    </script>
     <style>
         * {
             margin: 0;

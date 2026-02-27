@@ -13,6 +13,20 @@ let currentRetentionWeeks = 5;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
+    // 等待 ECharts 加载完成
+    const maxWaitTime = 30000; // 最多等待 30 秒
+    const startTime = Date.now();
+    
+    while (typeof echarts === 'undefined') {
+        if (Date.now() - startTime > maxWaitTime) {
+            console.error('ECharts 加载超时');
+            alert('图表库加载失败，请刷新页面重试');
+            return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.log('✓ ECharts 已就绪，开始加载数据');
     await loadAllData();
     initEventListeners();
     updateAllCharts();
