@@ -6,22 +6,31 @@
     <title>搜索数据看板</title>
     <!-- ECharts 多 CDN 备选方案 -->
     <script>
-        // CDN 备选列表
+        // CDN 备选列表（按稳定性排序，国内 CDN 优先）
         const cdnList = [
             {
-                echarts: 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
+                name: '字节跳动 CDN',
+                echarts: 'https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/echarts/5.3.2/echarts.min.js',
                 wordcloud: 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
             },
             {
+                name: '七牛云 CDN',
+                echarts: 'https://cdn.staticfile.org/echarts/5.4.3/echarts.min.js',
+                wordcloud: 'https://cdn.staticfile.org/echarts-wordcloud/2.1.0/echarts-wordcloud.min.js'
+            },
+            {
+                name: '又拍云 CDN',
                 echarts: 'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js',
                 wordcloud: 'https://unpkg.com/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
             },
             {
+                name: 'Cloudflare CDN',
                 echarts: 'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js',
                 wordcloud: 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
             },
             {
-                echarts: 'https://lib.baomitu.com/echarts/5.4.3/echarts.min.js',
+                name: 'jsDelivr CDN',
+                echarts: 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
                 wordcloud: 'https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js'
             }
         ];
@@ -58,22 +67,24 @@
         async function loadECharts() {
             while (currentCdnIndex < cdnList.length) {
                 const cdn = cdnList[currentCdnIndex];
-                console.log(`尝试加载 CDN ${currentCdnIndex + 1}/${cdnList.length}:`, cdn.echarts);
+                console.log(`尝试加载 ${cdn.name} (${currentCdnIndex + 1}/${cdnList.length})`);
 
                 try {
                     // 加载 ECharts
                     await loadScript(cdn.echarts);
-                    console.log('✓ ECharts 加载成功');
+                    console.log(`✓ ECharts 加载成功 (${cdn.name})`);
                     echartsLoaded = true;
 
                     // 加载词云插件
                     await loadScript(cdn.wordcloud);
-                    console.log('✓ 词云插件加载成功');
+                    console.log(`✓ 词云插件加载成功 (${cdn.name})`);
                     wordcloudLoaded = true;
 
+                    // 显示成功提示
+                    console.log(`%c✓ 使用 ${cdn.name} 加载成功`, 'color: #4CAF50; font-weight: bold; font-size: 14px;');
                     return true;
                 } catch (error) {
-                    console.warn(`✗ CDN ${currentCdnIndex + 1} 加载失败:`, error.message);
+                    console.warn(`✗ ${cdn.name} 加载失败:`, error.message);
                     currentCdnIndex++;
                 }
             }
@@ -86,10 +97,10 @@
                     <p style="color: #666; margin-bottom: 10px;">无法加载图表库，请检查网络连接或尝试以下方法：</p>
                     <ul style="text-align: left; max-width: 500px; margin: 20px auto; color: #666; line-height: 1.8;">
                         <li>检查网络连接是否正常</li>
-                        <li>关闭浏览器的跟踪保护功能</li>
-                        <li>尝试使用其他浏览器（Chrome、Edge）</li>
+                        <li>关闭浏览器的跟踪保护功能（Safari 设置 → 隐私 → 关闭"防止跨站跟踪"）</li>
+                        <li>尝试使用其他浏览器（Chrome、Edge、Firefox）</li>
                         <li>检查防火墙或代理设置</li>
-                        <li>刷新页面重试</li>
+                        <li>如果在公司网络，可能需要联系 IT 部门</li>
                     </ul>
                     <button onclick="location.reload()" style="
                         padding: 12px 30px;
